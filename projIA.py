@@ -126,9 +126,10 @@ class solitaire(Problem):
         self.actions = board_moves(state.board)
 
     def result(self, state, action):
-        self.state = state( board_performe_move(state.board, action) )
+        self.state = state( board_perform_move(state.board, action) )
 
     def goal_test(self, state):
+        #Ver se existe so 1 pino no state (?)
 
     def path_cost(self, c, state1, action, state2):
 

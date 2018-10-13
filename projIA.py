@@ -1,7 +1,17 @@
 from search import *
 from copy import deepcopy
+import time
 
-b1 = [["O", "O", "_"], ["_", "_", "O"], ["_", "_", "_"]]
+b_basic = [["O", "O", "_"], ["_", "_", "O"], ["_", "_", "_"]]
+b1 = [["X","X","O","O","O","O","O","X","X"],
+ ["X","X","O","O","O","O","O","X","X"],
+ ["O","O","O","O","O","O","O","O","O"],
+ ["O","O","O","O","O","O","O","O","O"],
+ ["O","O","O","O","_","O","O","O","O"],
+ ["O","O","O","O","O","O","O","O","O"],
+ ["O","O","O","O","O","O","O","O","O"],
+ ["X","X","O","O","O","O","O","X","X"],
+ ["X","X","O","O","O","O","O","X","X"]]
 
 def c_peg():
     return "O"
@@ -148,4 +158,9 @@ class solitaire(Problem):
     def h(self, node):
        return 0
 
+start_time = time.time()
 print(depth_first_tree_search(solitaire(b1)).solution())
+print( "Demorou ", time.time()-start_time, " medida?")
+#print(depth_first_graph_search(solitaire(b1)).solution()) WORKS for basic problem
+#print(best_first_graph_search(solitaire(b1), f=solitaire(b1).h).solution())
+#print(astar_search(solitaire(b1)).solution()) WORKS for basic problem

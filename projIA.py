@@ -1,16 +1,7 @@
-import search
-import utils
+from search import *
+from copy import deepcopy
 
-
-b1 = [["X","X","O","O","O","O","O","X","X"],
- ["X","X","O","O","O","O","O","X","X"],
- ["O","O","O","O","O","O","O","O","O"],
- ["O","O","O","O","O","O","O","O","O"],
- ["O","O","O","O","_","O","O","O","O"],
- ["O","O","O","O","O","O","O","O","O"],
- ["O","O","O","O","O","O","O","O","O"],
- ["X","X","O","O","O","O","O","X","X"],
- ["X","X","O","O","O","O","O","X","X"]]
+b1 = [["O", "O", "_"], ["_", "_", "O"], ["_", "_", "_"]]
 
 def c_peg():
     return "O"
@@ -91,17 +82,19 @@ def board_moves(b):
     
     return moves
 
+#print(board_moves(b1))
 def board_perform_move(b, move):
     
-    b_copy = list(b)
+    b_copy = deepcopy(b)
     
-    b_copy[ pos_l( move_initial( move ) ) ][pos_c( move_initial( move ) )] = c_empty()
+    b_copy[pos_l(move_initial(move))][pos_c(move_initial(move))] = c_empty()
     
-    b_copy[ pos_l( move_final( move ) ) ][pos_c( move_final( move ) )] = c_peg()
-    
+    b_copy[pos_l(move_final(move))][pos_c(move_final(move))] = c_peg()
+
+    b_copy[(pos_l(move_initial(move))+pos_l(move_final(move)))//2][(pos_c(move_initial(move))+pos_c(move_final(move)))//2] = c_empty()
+
     return b_copy
 
-"""
 class sol_state:
 
     def __init__(self, board):
@@ -109,7 +102,7 @@ class sol_state:
         self.cost = 0
     
     def __lt__(self, state):
-        #TO BE DETERMINED
+        return True
 
 
 class solitaire(Problem):
@@ -119,20 +112,40 @@ class solitaire(Problem):
 
     def __init__(self, board):
         self.board = board
-        self.actions = None
-        #self.state = state(board)
+        self.initial = sol_state(board)
+
 
     def actions(self, state):
-        self.actions = board_moves(state.board)
+        return board_moves(state.board)
 
     def result(self, state, action):
-        self.state = state( board_perform_move(state.board, action) )
+        return sol_state(board_perform_move(state.board, action))
 
     def goal_test(self, state):
-        #Ver se existe so 1 pino no state (?)
+
+        n_line = len(state.board)
+
+        n_colum = len(state.board[0])
+
+        num_pegs = 0
+
+        for i in range(0, n_line):
+            for j in range(0, n_colum):
+                if is_peg(state.board[i][j]):
+                    num_pegs += 1
+
+                if num_pegs > 1:
+                    return False
+
+        if num_pegs == 1:
+            return True
+        else:
+            return False
 
     def path_cost(self, c, state1, action, state2):
+        return c+1
 
     def h(self, node):
-       
-"""
+       return 0
+
+print(depth_first_tree_search(solitaire(b1)).solution())

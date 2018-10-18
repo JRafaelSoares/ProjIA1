@@ -71,24 +71,24 @@ def board_moves(b):
                 if i != 0 and i != 1:
                     
                     if is_peg(b[i - 1][j]) and is_peg( b[i - 2][j] ):
-                        moves.append( make_move( make_pos(i - 2, j), make_move(i,j) ) )
+                        moves.append( make_move( make_pos(i - 2, j), make_pos(i,j) ) )
                     
                 if i != n_line - 1 and i != n_line - 2:
                     
                     if is_peg(b[i + 1][j]) and is_peg( b[i + 2][j] ):
                     
-                        moves.append( make_move( make_pos(i + 2, j), make_move(i,j) ) )
+                        moves.append( make_move( make_pos(i + 2, j), make_pos(i,j) ) )
                 
                 if j != 0 and j != 1:
                             
                     if is_peg( b[i][j - 1] ) and is_peg( b[i][j - 2] ):
-                        moves.append( make_move( make_pos(i, j - 2), make_move(i,j) ) )  
+                        moves.append( make_move( make_pos(i, j - 2), make_pos(i,j) ) )  
                 
                 if j != n_colum - 1 and j != n_colum - 2:
                             
                     if is_peg(b[i][j + 1]) and is_peg( b[i][j + 2] ):
                             
-                        moves.append( make_move( make_pos(i, j + 2), make_move(i,j) ) ) 
+                        moves.append( make_move( make_pos(i, j + 2), make_pos(i,j) ) ) 
     
     return moves
 
@@ -156,11 +156,11 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-       return 0
+        return 0
 
-start_time = time.time()
-print(depth_first_tree_search(solitaire(b1)).solution())
-print( "Demorou ", time.time()-start_time, " medida?")
+
+#print(depth_first_tree_search(solitaire(b1)).solution())
+#print( "Demorou ", time.time()-start_time, " medida?")
 #print(depth_first_graph_search(solitaire(b1)).solution()) WORKS for basic problem
 #print(best_first_graph_search(solitaire(b1), f=solitaire(b1).h).solution())
 #print(astar_search(solitaire(b1)).solution()) WORKS for basic problem

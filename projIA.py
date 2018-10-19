@@ -1,8 +1,10 @@
 from search import *
 from copy import deepcopy
-import time
+import timeit
 
-b_basic = [["O", "O", "_"], ["_", "_", "O"], ["_", "_", "_"]]
+b_basic = [["O", "O", "_"],
+           ["_", "_", "O"],
+           ["_", "_", "_"]]
 b1 = [["X","X","O","O","O","O","O","X","X"],
  ["X","X","O","O","O","O","O","X","X"],
  ["O","O","O","O","O","O","O","O","O"],
@@ -12,6 +14,17 @@ b1 = [["X","X","O","O","O","O","O","X","X"],
  ["O","O","O","O","O","O","O","O","O"],
  ["X","X","O","O","O","O","O","X","X"],
  ["X","X","O","O","O","O","O","X","X"]]
+
+b2 = [['X','O','O','O','X'],
+      ['O','O','O','O','O'],
+      ['O','O','_','O','O'],
+      ['O','O','O','O','O'],
+      ['X','O','O','O','X']]
+
+b3 = [["O","O","O","X"],
+ ["O","O","O","O"],
+ ["O","_","O","O"],
+ ["O","O","O","O"]]
 
 def c_peg():
     return "O"
@@ -66,7 +79,7 @@ def board_moves(b):
     for i in range( 0, n_line ):
         for j in range( 0, n_colum ):
             
-            if (is_empty( b[i][j] ) ):
+            if is_empty( b[i][j] ) :
                 
                 if i != 0 and i != 1:
                     
@@ -92,7 +105,132 @@ def board_moves(b):
     
     return moves
 
-#print(board_moves(b1))
+
+#CORNERS
+def number_corner(b):
+    corners = []
+
+    n_line = len(b)
+
+    n_colum = len(b[0])
+
+    if not(is_blocked(b[0][0])):
+        corners.append(make_pos(0,0))
+
+    if not(is_blocked(b[0][n_colum-1])):
+        corners.append(make_pos(0,n_colum-1))
+
+    if not(is_blocked(b[n_line-1][0])):
+        corners.append(make_pos(n_line-1, 0))
+
+    if not(is_blocked(b[n_line-1][n_colum-1])):
+        corners.append(make_pos(n_line-1, n_colum-1))
+
+    for i in range(0, n_line):
+        for j in range(0, n_colum):
+            k=0
+
+            if not(is_blocked(b[i][j])):
+
+                if i != 0:
+
+                    if is_blocked(b[i - 1][j]):
+                        k+=1
+
+                if i != n_line - 1:
+
+                    if is_blocked(b[i + 1][j]):
+                        k+=1
+
+                if j != 0:
+
+                    if is_blocked(b[i][j - 1]):
+                        k+=1
+
+                if j != n_colum - 1:
+
+                    if is_blocked(b[i][j + 1]):
+                        k+=1
+
+            if k>=2:
+                corners.append(make_pos(i,j))
+
+    return corners
+
+def heuristic_corners( board, corners ):
+
+    num_corners = 0
+    for x in range(0, len(corners)):
+        if is_peg(board[pos_l(corners[x])][pos_c(corners[x])]):
+            num_corners += 1
+
+    return num_corners
+
+def get_group(groups, pos):
+    for x in range(0,len(groups)):
+        if pos in groups[x]:
+            return groups[x]
+
+    return None
+
+def find_groups(b):
+
+    groups = []
+
+    n_line = len(b)
+
+    n_colum = len(b[0])
+
+    for i in range(0, n_line):
+
+        for j in range(0, n_colum):
+            if is_peg(b[i][j]):
+
+                if i == 0:
+                    if j == 0:
+                        groups.append([make_pos(i,j)])
+
+                    else:
+                        g = get_group(groups, make_pos(i, j-1))
+
+                        if g != None:
+                            g.append(make_pos(i,j))
+
+                        else:
+                            groups.append([make_pos(i,j)])
+
+                elif j == 0 and i != 0:
+                    g = get_group(groups, make_pos(i-1, j))
+
+                    if g != None:
+                        g.append(make_pos(i,j))
+
+                    else:
+                        groups.append([make_pos(i,j)])
+
+                else:
+                    g1 = get_group(groups, make_pos(i-1,j))
+                    g2 = get_group(groups, make_pos(i, j-1))
+
+                    if g1 == g2 and g1 != None:
+                        g1.append(make_pos(i,j))
+
+                    elif g1 == None and g2 == None:
+                        groups.append([make_pos(i,j)])
+
+                    elif g1 != g2 and g1 != None and g2 != None:
+                        g1.append(make_pos(i,j))
+                        g1 += g2
+                        groups.remove(g2)
+
+                    elif g1 != None and g2 == None:
+                        g1.append(make_pos(i,j))
+
+                    else:
+                        g2.append(make_pos(i,j))
+
+    return len(groups)
+
 def board_perform_move(b, move):
     
     b_copy = deepcopy(b)
@@ -105,14 +243,34 @@ def board_perform_move(b, move):
 
     return b_copy
 
+def number_of_pegs(board):
+    n_line = len(board)
+
+    n_colum = len(board[0])
+
+    peg_number = 0
+
+    for i in range(0, n_line):
+        for j in range(0, n_colum):
+            if is_peg(board[i][j]):
+                peg_number+=1
+
+    return peg_number
+
 class sol_state:
 
-    def __init__(self, board):
+    def __init__(self, board, pegnum=None):
+        __slots__ = 'board'
         self.board = board
-        self.cost = 0
+
+        if pegnum != None:
+            self.peg_num = pegnum
+
+        else:
+            self.peg_num = number_of_pegs(board)
     
     def __lt__(self, state):
-        return True
+        return self.peg_num > state.peg_num
 
 
 class solitaire(Problem):
@@ -156,11 +314,18 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-        return 0
+        return heuristic_corners(node.state.board, number_corner(node.state.board))
 
 
 #print(depth_first_tree_search(solitaire(b1)).solution())
 #print( "Demorou ", time.time()-start_time, " medida?")
-#print(depth_first_graph_search(solitaire(b1)).solution()) WORKS for basic problem
-#print(best_first_graph_search(solitaire(b1), f=solitaire(b1).h).solution())
-#print(astar_search(solitaire(b1)).solution()) WORKS for basic problem
+
+#start = timeit.timeit()
+#print(depth_first_graph_search(solitaire(b4)))
+#print(best_first_graph_search(solitaire(b_basic), f=solitaire(b_basic).h))
+
+#print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
+#print(astar_search(solitaire(b2), solitaire(b2).h).solution())
+#end = timeit.timeit()
+
+#print( end - star

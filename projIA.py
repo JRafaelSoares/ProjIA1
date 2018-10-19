@@ -316,16 +316,17 @@ class solitaire(Problem):
     def h(self, node):
         return heuristic_corners(node.state.board, number_corner(node.state.board))
 
-
+start = timeit.timeit()
+#print(heuristic_corners(b3, number_corner(b3)) +find_groups(b3))
 #print(depth_first_tree_search(solitaire(b1)).solution())
 #print( "Demorou ", time.time()-start_time, " medida?")
 
-#start = timeit.timeit()
-#print(depth_first_graph_search(solitaire(b4)))
+
+#print(depth_first_graph_search(solitaire(b3)).solution())
 #print(best_first_graph_search(solitaire(b_basic), f=solitaire(b_basic).h))
 
 #print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
-#print(astar_search(solitaire(b2), solitaire(b2).h).solution())
-#end = timeit.timeit()
+print(astar_search(solitaire(b3), solitaire(b3).h).solution())
+end = timeit.timeit()
 
-#print( end - star
+print( end - start)

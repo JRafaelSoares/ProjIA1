@@ -73,11 +73,11 @@ def board_moves(b):
     moves = []
     
     n_line = len( b )
-    
-    n_colum = len( b[0] )
+
+    n_column = len( b[0] )
     
     for i in range( 0, n_line ):
-        for j in range( 0, n_colum ):
+        for j in range( 0, n_column ):
             
             if is_empty( b[i][j] ) :
                 
@@ -97,7 +97,7 @@ def board_moves(b):
                     if is_peg( b[i][j - 1] ) and is_peg( b[i][j - 2] ):
                         moves.append( make_move( make_pos(i, j - 2), make_pos(i,j) ) )  
                 
-                if j != n_colum - 1 and j != n_colum - 2:
+                if j != n_column - 1 and j != n_column - 2:
                             
                     if is_peg(b[i][j + 1]) and is_peg( b[i][j + 2] ):
                             
@@ -112,42 +112,37 @@ def number_corner(b):
 
     n_line = len(b)
 
-    n_colum = len(b[0])
-
-    if not(is_blocked(b[0][0])):
-        corners.append(make_pos(0,0))
-
-    if not(is_blocked(b[0][n_colum-1])):
-        corners.append(make_pos(0,n_colum-1))
-
-    if not(is_blocked(b[n_line-1][0])):
-        corners.append(make_pos(n_line-1, 0))
-
-    if not(is_blocked(b[n_line-1][n_colum-1])):
-        corners.append(make_pos(n_line-1, n_colum-1))
+    n_column = len(b[0])
+    
+    for i in range(2):
+        for j in range(2):
+            line = 0 if i==0 else n_line-1
+            column = 0 if j==0 else n_column-1
+            if not(is_blocked(b[line][column])):
+                corners.append(make_pos(line,column))
 
     for i in range(0, n_line):
-        for j in range(0, n_colum):
-            k=0
+        for j in range(0, n_column):
+            k = 0
 
             if not(is_blocked(b[i][j])):
 
                 if i != 0:
 
                     if is_blocked(b[i - 1][j]):
-                        k+=1
+                        k += 1
 
                 if i != n_line - 1:
 
                     if is_blocked(b[i + 1][j]):
-                        k+=1
+                        k += 1
 
                 if j != 0:
 
                     if is_blocked(b[i][j - 1]):
                         k+=1
 
-                if j != n_colum - 1:
+                if j != n_column - 1:
 
                     if is_blocked(b[i][j + 1]):
                         k+=1
@@ -179,11 +174,11 @@ def find_groups(b):
 
     n_line = len(b)
 
-    n_colum = len(b[0])
+    n_column = len(b[0])
 
     for i in range(0, n_line):
 
-        for j in range(0, n_colum):
+        for j in range(0, n_column):
             if is_peg(b[i][j]):
 
                 if i == 0:
@@ -246,12 +241,12 @@ def board_perform_move(b, move):
 def number_of_pegs(board):
     n_line = len(board)
 
-    n_colum = len(board[0])
+    n_column = len(board[0])
 
     peg_number = 0
 
     for i in range(0, n_line):
-        for j in range(0, n_colum):
+        for j in range(0, n_column):
             if is_peg(board[i][j]):
                 peg_number+=1
 
@@ -279,9 +274,8 @@ class solitaire(Problem):
     # Type Content
 
     def __init__(self, board):
+        super().__init__(self, sol_state(board))
         self.board = board
-        self.initial = sol_state(board)
-
 
     def actions(self, state):
         return board_moves(state.board)
@@ -293,12 +287,12 @@ class solitaire(Problem):
 
         n_line = len(state.board)
 
-        n_colum = len(state.board[0])
+        n_column = len(state.board[0])
 
         num_pegs = 0
 
         for i in range(0, n_line):
-            for j in range(0, n_colum):
+            for j in range(0, n_column):
                 if is_peg(state.board[i][j]):
                     num_pegs += 1
 
@@ -322,11 +316,11 @@ start = timeit.timeit()
 #print( "Demorou ", time.time()-start_time, " medida?")
 
 
-#print(depth_first_graph_search(solitaire(b3)).solution())
+print(depth_first_graph_search(solitaire(b3)).solution())
 #print(best_first_graph_search(solitaire(b_basic), f=solitaire(b_basic).h))
 
 #print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
-print(astar_search(solitaire(b3), solitaire(b3).h).solution())
+#print(astar_search(solitaire(b3), solitaire(b3).h).solution())
 end = timeit.timeit()
 
 print( end - start)

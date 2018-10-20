@@ -73,6 +73,49 @@ def move_initial(move):
 def move_final(move):
     return move[1]
 
+"""
+Board moves checking pins
+def board_moves(b):
+    moves = []
+
+    n_line = len(b)
+
+    n_column = len(b[0])
+
+    num_types = [0, 0]
+    for i in range(0, n_line):
+        for j in range(0, n_column):
+
+            if is_peg(b[i][j]):
+                num_types[(i+j)%2] += 1
+                if i != 0 and i != 1:
+
+                    if is_peg(b[i - 1][j]) and is_empty(b[i - 2][j]):
+                        moves.append(make_move(make_pos(i, j), make_pos(i-2, j)))
+
+                if i != n_line - 1 and i != n_line - 2:
+
+                    if is_peg(b[i + 1][j]) and is_empty(b[i + 2][j]):
+                        moves.append(make_move(make_pos(i, j), make_pos(i+2, j)))
+
+                if j != 0 and j != 1:
+
+                    if is_peg(b[i][j - 1]) and is_empty(b[i][j - 2]):
+                        moves.append(make_move(make_pos(i, j), make_pos(i, j-2)))
+
+                if j != n_column - 1 and j != n_column - 2:
+
+                    if is_peg(b[i][j + 1]) and is_empty(b[i][j + 2]):
+                        moves.append(make_move(make_pos(i, j), make_pos(i, j+2)))
+
+    if abs(num_types[0]-num_types[1]) != 1:
+        return []
+    else:
+        return moves
+
+print(board_moves(b_basic))
+"""
+
 def board_moves(b):
     
     moves = []
@@ -84,12 +127,12 @@ def board_moves(b):
     for i in range( 0, n_line ):
         for j in range( 0, n_column ):
             
-            if is_empty( b[i][j] ) :
+            if is_empty(b[i][j]):
                 
                 if i != 0 and i != 1:
                     
-                    if is_peg(b[i - 1][j]) and is_peg( b[i - 2][j] ):
-                        moves.append( make_move( make_pos(i - 2, j), make_pos(i,j) ) )
+                    if is_peg(b[i - 1][j]) and is_peg(b[i - 2][j]):
+                        moves.append(make_move(make_pos(i - 2, j), make_pos(i,j) ) )
                     
                 if i != n_line - 1 and i != n_line - 2:
                     
@@ -119,14 +162,6 @@ def heuristic_corners(b):
     n_column = len(b[0])
 
     num_corners = 0
-    """
-    for i in range(2):
-        for j in range(2):
-            line = 0 if i == 0 else n_line-1
-            column = 0 if j == 0 else n_column-1
-            if is_peg(b[line][column]):
-                num_corners += 1
-    """
 
     for i in range(0, n_line):
         for j in range(0, n_column):
@@ -161,54 +196,6 @@ def heuristic_corners(b):
                 num_corners += 1
 
     return num_corners
-""""
-Wrong Corners
-def heuristic_corners(b):
-
-    n_line = len(b)
-
-    n_column = len(b[0])
-
-    num_corners = 0
-
-    for i in range(2):
-        for j in range(2):
-            line = 0 if i == 0 else n_line-1
-            column = 0 if j == 0 else n_column-1
-            if is_peg(b[line][column]):
-                num_corners += 1
-
-    for i in range(0, n_line):
-        for j in range(0, n_column):
-            dead_ends = 0
-
-            if not(is_blocked(b[i][j])):
-
-                if i != 0:
-
-                    if is_blocked(b[i - 1][j]):
-                        dead_ends += 1
-
-                if i != n_line - 1:
-
-                    if is_blocked(b[i + 1][j]):
-                        dead_ends += 1
-
-                if j != 0:
-
-                    if is_blocked(b[i][j - 1]):
-                        dead_ends += 1
-
-                if j != n_column - 1:
-
-                    if is_blocked(b[i][j + 1]):
-                        dead_ends += 1
-
-            if dead_ends >= 2:
-                num_corners += 1
-
-    return num_corners
-"""
 
 def get_group(groups, pos):
     for x in range(0,len(groups)):
@@ -268,10 +255,10 @@ def find_groups(b):
                         groups.remove(g2)
 
                     elif g1 != None and g2 == None:
-                        g1.append(make_pos(i,j))
+                        g1.append(make_pos(i, j))
 
                     else:
-                        g2.append(make_pos(i,j))
+                        g2.append(make_pos(i, j))
 
     return len(groups)
 
@@ -316,25 +303,23 @@ class sol_state:
     def __lt__(self, state):
         return self.peg_num > state.peg_num
 
-    def getPegNum(self):
-        return self.peg_num
-
-
 class solitaire(Problem):
 
     # TAI content
     # Type Content
 
     def __init__(self, board):
-        super().__init__(self, sol_state(board))
+        super().__init__(sol_state(board))
         self.board = board
 
     def actions(self, state):
         return board_moves(state.board)
 
     def result(self, state, action):
-        #print(state.getPegNum())
-        return sol_state(board_perform_move(state.board, action))
+        if type(state) == solitaire:
+            return sol_state(board_perform_move(state.board, action))
+        else:
+            return sol_state(board_perform_move(state.board, action), state.peg_num-1)
 
     def goal_test(self, state):
 
@@ -361,7 +346,7 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-        return heuristic_corners(node.state.board)
+        return 3*heuristic_corners(node.state.board) + 7*find_groups(node.state.board)
 
 def greedy_search(problem, h=None):
     """f(n) = h(n)"""
@@ -380,8 +365,6 @@ start = time.time()
 #print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
 #print(astar_search(solitaire(b_30),solitaire(b_30).h).solution())
 
-
-print(greedy_search(solitaire(b_30), h=solitaire(b_30).h).solution())
+print(greedy_search(solitaire(b_basic), h=solitaire(b_basic).h).solution())
 end = time.time()
-
 print(end-start)

@@ -288,7 +288,7 @@ def number_of_pegs(board):
 
     return peg_number
 
-class sol_state:
+class sol_state():
 
     def __init__(self, board, pegnum=None):
         __slots__ = 'board'
@@ -346,14 +346,14 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-        return 3*heuristic_corners(node.state.board) + 7*find_groups(node.state.board)
+        return heuristic_corners(node.state.board) + find_groups(node.state.board) + len(board_moves(node.state.board))
 
 def greedy_search(problem, h=None):
     """f(n) = h(n)"""
     h = memoize(h or problem.h, 'h')
     return best_first_graph_search(problem, h)
 
-start = time.time()
+
 #print(heuristic_corners(b3, number_corner(b3)) +find_groups(b3))
 #print(depth_first_tree_search(solitaire(b1)).solution())
 #print( "Demorou ", time.time()-start_time, " medida?")
@@ -363,8 +363,12 @@ start = time.time()
 #print(best_first_graph_search(solitaire(b_30), f=solitaire(b_30).h).solution())
 
 #print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
-#print(astar_search(solitaire(b_30),solitaire(b_30).h).solution())
 
-print(greedy_search(solitaire(b_basic), h=solitaire(b_basic).h).solution())
+start = time.time()
+print(astar_search(solitaire(b1), solitaire(b1).h).solution())
+
+
+#print(greedy_search(solitaire(b_30), h=solitaire(b_30).h).solution())
+
 end = time.time()
 print(end-start)

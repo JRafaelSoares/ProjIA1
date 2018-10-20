@@ -1,6 +1,6 @@
 from search import *
 from copy import deepcopy
-import timeit
+import time
 
 b_basic = [["O", "O", "_"],
            ["_", "_", "O"],
@@ -14,6 +14,11 @@ b1 = [["X","X","O","O","O","O","O","X","X"],
  ["O","O","O","O","O","O","O","O","O"],
  ["X","X","O","O","O","O","O","X","X"],
  ["X","X","O","O","O","O","O","X","X"]]
+
+b_30 = [["O","O","O","X","X"],
+        ["O","O","O","O","O"],
+        ["O","_","O","_","O"],
+        ["O","O","O","O","O"]]
 
 b2 = [['X','O','O','O','X'],
       ['O','O','O','O','O'],
@@ -107,59 +112,103 @@ def board_moves(b):
 
 
 #CORNERS
-def number_corner(b):
-    corners = []
+def heuristic_corners(b):
 
     n_line = len(b)
 
     n_column = len(b[0])
-    
+
+    num_corners = 0
+    """
     for i in range(2):
         for j in range(2):
-            line = 0 if i==0 else n_line-1
-            column = 0 if j==0 else n_column-1
-            if not(is_blocked(b[line][column])):
-                corners.append(make_pos(line,column))
+            line = 0 if i == 0 else n_line-1
+            column = 0 if j == 0 else n_column-1
+            if is_peg(b[line][column]):
+                num_corners += 1
+    """
 
     for i in range(0, n_line):
         for j in range(0, n_column):
-            k = 0
+            dead_ends = 0
+
+            if is_peg(b[i][j]):
+
+                dead_ends += 1 if i == 0 or i == n_line-1 else 0
+                dead_ends += 1 if j == 0 or j == n_column-1 else 0
+
+                if i != 0:
+
+                    if is_blocked(b[i - 1][j]):
+                        dead_ends += 1
+
+                if i != n_line - 1:
+
+                    if is_blocked(b[i + 1][j]):
+                        dead_ends += 1
+
+                if j != 0:
+
+                    if is_blocked(b[i][j - 1]):
+                        dead_ends += 1
+
+                if j != n_column - 1:
+
+                    if is_blocked(b[i][j + 1]):
+                        dead_ends += 1
+
+            if dead_ends >= 2:
+                num_corners += 1
+
+    return num_corners
+""""
+Wrong Corners
+def heuristic_corners(b):
+
+    n_line = len(b)
+
+    n_column = len(b[0])
+
+    num_corners = 0
+
+    for i in range(2):
+        for j in range(2):
+            line = 0 if i == 0 else n_line-1
+            column = 0 if j == 0 else n_column-1
+            if is_peg(b[line][column]):
+                num_corners += 1
+
+    for i in range(0, n_line):
+        for j in range(0, n_column):
+            dead_ends = 0
 
             if not(is_blocked(b[i][j])):
 
                 if i != 0:
 
                     if is_blocked(b[i - 1][j]):
-                        k += 1
+                        dead_ends += 1
 
                 if i != n_line - 1:
 
                     if is_blocked(b[i + 1][j]):
-                        k += 1
+                        dead_ends += 1
 
                 if j != 0:
 
                     if is_blocked(b[i][j - 1]):
-                        k+=1
+                        dead_ends += 1
 
                 if j != n_column - 1:
 
                     if is_blocked(b[i][j + 1]):
-                        k+=1
+                        dead_ends += 1
 
-            if k>=2:
-                corners.append(make_pos(i,j))
-
-    return corners
-
-def heuristic_corners( board, corners ):
-
-    num_corners = 0
-    for x in range(0, len(corners)):
-        if is_peg(board[pos_l(corners[x])][pos_c(corners[x])]):
-            num_corners += 1
+            if dead_ends >= 2:
+                num_corners += 1
 
     return num_corners
+"""
 
 def get_group(groups, pos):
     for x in range(0,len(groups)):
@@ -248,7 +297,7 @@ def number_of_pegs(board):
     for i in range(0, n_line):
         for j in range(0, n_column):
             if is_peg(board[i][j]):
-                peg_number+=1
+                peg_number += 1
 
     return peg_number
 
@@ -267,6 +316,9 @@ class sol_state:
     def __lt__(self, state):
         return self.peg_num > state.peg_num
 
+    def getPegNum(self):
+        return self.peg_num
+
 
 class solitaire(Problem):
 
@@ -281,6 +333,7 @@ class solitaire(Problem):
         return board_moves(state.board)
 
     def result(self, state, action):
+        #print(state.getPegNum())
         return sol_state(board_perform_move(state.board, action))
 
     def goal_test(self, state):
@@ -308,19 +361,27 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-        return heuristic_corners(node.state.board, number_corner(node.state.board))
+        return heuristic_corners(node.state.board)
 
-start = timeit.timeit()
+def greedy_search(problem, h=None):
+    """f(n) = h(n)"""
+    h = memoize(h or problem.h, 'h')
+    return best_first_graph_search(problem, h)
+
+start = time.time()
 #print(heuristic_corners(b3, number_corner(b3)) +find_groups(b3))
 #print(depth_first_tree_search(solitaire(b1)).solution())
 #print( "Demorou ", time.time()-start_time, " medida?")
 
 
-print(depth_first_graph_search(solitaire(b3)).solution())
-#print(best_first_graph_search(solitaire(b_basic), f=solitaire(b_basic).h))
+#print(depth_first_graph_search(solitaire(b_30)).solution())
+#print(best_first_graph_search(solitaire(b_30), f=solitaire(b_30).h).solution())
 
 #print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
-#print(astar_search(solitaire(b3), solitaire(b3).h).solution())
-end = timeit.timeit()
+#print(astar_search(solitaire(b_30),solitaire(b_30).h).solution())
 
-print( end - start)
+
+print(greedy_search(solitaire(b_30), h=solitaire(b_30).h).solution())
+end = time.time()
+
+print(end-start)

@@ -1,6 +1,7 @@
 from search import *
 from copy import deepcopy
 import time
+import math
 
 
 from collections import Counter
@@ -314,7 +315,7 @@ def find_groups(b):
         for x in range(0, len(groups)):
             for y in range(1, len(groups)):
                 distances += biggest_length(groups[x], groups[y])
-    return len(groups) + distances
+    return [len(groups), distances]
 
 def board_perform_move(b, move):
     
@@ -365,7 +366,7 @@ class solitaire(Problem):
     def __init__(self, board):
         super().__init__(sol_state(board))
         self.board = board
-        self.i = 0
+        self.diagonal = math.sqrt(len(board)**2 + len(board[0])**2)
 
     def actions(self, state):
         return board_moves(state.board)
@@ -398,7 +399,8 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-        return find_groups(node.state.board) + 30*heuristic_corners(node.state.board)
+        group_info = find_groups(node.state.board)
+        return group_info[0]+group_info[1] + self.diagonal*group_info[0]*heuristic_corners(node.state.board)
 
 def greedy_search(problem, h=None):
     """f(n) = h(n)"""

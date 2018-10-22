@@ -2,9 +2,44 @@ from search import *
 from copy import deepcopy
 import time
 
+
+from collections import Counter
+import linecache
+import os
+import tracemalloc
+
+def display_top(snapshot, key_type='lineno', limit=10):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace "/path/to/module/file.py" with "module/file.py"
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
+tracemalloc.start()
+
 b_basic = [["O", "O", "_"],
            ["_", "_", "O"],
            ["_", "_", "_"]]
+
 b1 = [["X","X","O","O","O","O","O","X","X"],
  ["X","X","O","O","O","O","O","X","X"],
  ["O","O","O","O","O","O","O","O","O"],
@@ -20,16 +55,18 @@ b_30 = [["O","O","O","X","X"],
         ["O","_","O","_","O"],
         ["O","O","O","O","O"]]
 
-b2 = [['X','O','O','O','X'],
-      ['O','O','O','O','O'],
-      ['O','O','_','O','O'],
-      ['O','O','O','O','O'],
-      ['X','O','O','O','X']]
+bp = [["X", "X", "O", "O", "O", "X", "X"],
+      ["X", "O", "O", "O", "O", "O", "x"],
+      ["O", "O", "O", "O", "O", "O", "O"],
+      ["O", "O", "O", "_", "O", "O", "O"],
+      ["O", "O", "O", "O", "O", "O", "O"],
+      ["X", "O", "O", "O", "O", "O", "X"],
+      ["X", "X", "O", "O", "O", "X", "X"]]
 
-b3 = [["O","O","O","X"],
- ["O","O","O","O"],
- ["O","_","O","O"],
- ["O","O","O","O"]]
+b_32 = [['O', 'O', 'O', 'X', 'X', 'X'],
+      ['O', '_', 'O', 'O', 'O', 'O'],
+      ['O', 'O', 'O', 'O', 'O', 'O'],
+      ['O', 'O', 'O', 'O', 'O', 'O']]
 
 def c_peg():
     return "O"
@@ -204,6 +241,19 @@ def get_group(groups, pos):
 
     return None
 
+def biggest_length(g1, g2):
+    num = 0
+    for x in g1:
+        for y in g2:
+            line = pos_l(y)-pos_l(x)
+            col = pos_c(y)-pos_c(x)
+            calc = line*line + col*col
+            #num += calc
+            if num < calc:
+                num = calc
+
+    return num
+
 def find_groups(b):
 
     groups = []
@@ -259,8 +309,12 @@ def find_groups(b):
 
                     else:
                         g2.append(make_pos(i, j))
-
-    return len(groups)
+    distances=0
+    if len(groups) > 1:
+        for x in range(0, len(groups)):
+            for y in range(1, len(groups)):
+                distances += biggest_length(groups[x], groups[y])
+    return len(groups) + distances
 
 def board_perform_move(b, move):
     
@@ -289,9 +343,9 @@ def number_of_pegs(board):
     return peg_number
 
 class sol_state():
+    __slots__ = ['board', 'peg_num']
 
     def __init__(self, board, pegnum=None):
-        __slots__ = 'board'
         self.board = board
 
         if pegnum != None:
@@ -311,15 +365,13 @@ class solitaire(Problem):
     def __init__(self, board):
         super().__init__(sol_state(board))
         self.board = board
+        self.i = 0
 
     def actions(self, state):
         return board_moves(state.board)
 
     def result(self, state, action):
-        if type(state) == solitaire:
-            return sol_state(board_perform_move(state.board, action))
-        else:
-            return sol_state(board_perform_move(state.board, action), state.peg_num-1)
+        return sol_state(board_perform_move(state.board, action), state.peg_num-1)
 
     def goal_test(self, state):
 
@@ -346,7 +398,7 @@ class solitaire(Problem):
         return c+1
 
     def h(self, node):
-        return heuristic_corners(node.state.board) + find_groups(node.state.board) + len(board_moves(node.state.board))
+        return find_groups(node.state.board) + 30*heuristic_corners(node.state.board)
 
 def greedy_search(problem, h=None):
     """f(n) = h(n)"""
@@ -363,12 +415,34 @@ def greedy_search(problem, h=None):
 #print(best_first_graph_search(solitaire(b_30), f=solitaire(b_30).h).solution())
 
 #print(best_first_graph_search(solitaire(b2), f=solitaire(b2).h))
+#astar_search(solitaire(b_32), solitaire(b_32).h).solution()
 
+#print(astar_search(solitaire(b_30), solitaire(b_30).h).solution())
+
+print("ASTER 32")
 start = time.time()
-print(astar_search(solitaire(b1), solitaire(b1).h).solution())
+print(astar_search(solitaire(b_32), solitaire(b_32).h).solution())
 
+end = time.time()
+print(end-start)
 
-#print(greedy_search(solitaire(b_30), h=solitaire(b_30).h).solution())
+print("GREEDY 32")
+start = time.time()
+print(greedy_search(solitaire(b_32), h=solitaire(b_32).h).solution())
+
+end = time.time()
+print(end-start)
+
+print("GREEDY 30")
+start = time.time()
+print(greedy_search(solitaire(b_30), h=solitaire(b_30).h).solution())
+
+end = time.time()
+print(end-start)
+
+print("ASTER 30")
+start = time.time()
+print(astar_search(solitaire(b_30), solitaire(b_30).h).solution())
 
 end = time.time()
 print(end-start)
